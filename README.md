@@ -1,14 +1,18 @@
 # Adversarial Preference Optimization
 
-Collecting human feedback to update the reward model (RM) in RLHF can be practically exhausting. Is there any efficient way to automatically generate preference comparisons for RM? We proposed [Adversarial Preference Optimization](https://arxiv.org/abs/2311.08045) (APO), where we let RM and LLM play a min-max game. Through APO, both RM and LLM can be further enhanced without additional preference annotation.
+[![Code License](https://img.shields.io/badge/Code%20License-Apache_2.0-green.svg)](https://github.com/Linear95/APO/blob/main/LICENSE)
+[![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](https://github.com/Linear95/APO/blob/main/DATA_LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
+
+This repo contains the implementation of [Adversarial Preference Optimization](https://arxiv.org/abs/2311.08045) (APO). We let the reward model (RM) and LLM agent play a min-max game, through which both models can be further enhanced without additional preference annotation.
 
 <p align="center">
-  <img src="figures/apo_framework_shot.png" height="60%" width="60%">
+  <img src="figures/apo_framework_shot.png" height="75%" width="75%">
 </p>
 
-Currently, this repo contains:
-- the split Helpful\&Harmless dataset
-- the GPT-4 responses on HH-RM set as golden data
+Currently, the repo contains:
+- split Helpful\&Harmless (HH) dataset
+- GPT-4 responses on HH-RM-train set as golden annotation
 
 We are continuously updating this repo for the reproduction of APO experiments.
 
