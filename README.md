@@ -23,7 +23,7 @@ We are continuously updating this repo for the reproduction of APO experiments.
 To seperately update RM and LLM, we split the cleaned [Helpful\&Harmless](https://github.com/Linear95/DSP/tree/main/data) (HH) dataset into a RM training set and a LLM training set.
 
 | Data Type| HH-RM Train Set | HH-LLM Train Set| HH Test Set|
-| --------| ----------| -------| --------|
+| --------:| :----------|:-------| :--------|
 | Preference Pairs | [RM training set](data/hh-split/rm_data/hh_split_rm.train.json) | [RM validation set](data/hh-split/eval_data/hh_split_llm.valid.json) | [RM testing set](data/hh-split/eval_data/hh_cleaned_origin.test.json)|
 | Golden Answers | [APO positive responses](data/hh-split/rm_data/hh_split_rm.golden.json) | - | -|
 |User Queries | [APO negative responses](data/hh-split/rm_data/hh_split_rm_alpaca_v0.sample.json) (Alpaca samples)| [LLM (Alpaca) rejection samples](data/hh-split/llm_data/hh_split_llm_alpaca_v0.sample.json)| [LLM testing Queries](data/hh-split/eval_data/hh_cleaned_origin.test.json)|
