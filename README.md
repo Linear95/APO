@@ -15,12 +15,13 @@ We let the reward model (RM) and LLM agent play a min-max game, through which bo
 Currently, the repo contains:
 - [Split Helpful\&Harmless](data/hh-split) (HH) dataset
 - [GPT-4 responses](data/hh-split/rm_data/hh_split_rm.golden.json) as golden annotation on HH-RM training set
+- The Base & Testing RM training pipeline
 
 We are continuously updating this repo for the reproduction of APO experiments.
 
 ## Data \& Annotation
 
-To seperately update RM and LLM, we split the cleaned [Helpful\&Harmless](https://github.com/Linear95/DSP/tree/main/data) (HH) dataset into a RM training set and a LLM training set.
+To separately update RM and LLM, we split the cleaned [Helpful\&Harmless](https://github.com/Linear95/DSP/tree/main/data) (HH) dataset into an RM training set and a LLM training set.
 
 | Data Type| HH-RM Train Set | HH-LLM Train Set| HH Test Set|
 | --------:| :----------|:-------| :--------|
@@ -85,7 +86,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --tf32 false --fp16 false
 ```
 
-We also trained a testing RM to automatically evaluate the LLM response samples on the testing queries. To train the testing RM, simply change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the command above to learn with all the HH training comparisons.
+We also trained a testing RM to evaluate the LLM response samples on the testing queries automatically. To train the testing RM, change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the above command to learn with all the HH training comparisons.
 
 
 ## Citation
