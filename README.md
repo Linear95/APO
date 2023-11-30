@@ -29,6 +29,64 @@ To seperately update RM and LLM, we split the cleaned [Helpful\&Harmless](https:
 |User Queries | [APO negative responses](data/hh-split/rm_data/hh_split_rm_alpaca_v0.sample.json) (Alpaca samples)| [LLM (Alpaca) rejection samples](data/hh-split/llm_data/hh_split_llm_alpaca_v0.sample.json)| [LLM testing Queries](data/hh-split/eval_data/hh_cleaned_origin.test.json)|
 
 
+## Environment
+We use `Python3.8` with the dependencies listed in `requirements.txt`. To build the appropriate environment, use the following command:
+```
+pip3 install -r requirements.txt
+```
+
+## Base RM Training
+
+To train the base RM for rejection sampling and APO, use the following command:
+
+```bash
+REPO_DIR=<path_to_this_repo>
+DATA_DIR=${REPO_DIR}/data/hh-split
+TRAIN_DATA_LIST="${DATA_DIR}/rm_data/hh_split_rm.train.json"
+TEST_DATA_LIST="${DATA_DIR}/eval_data/hh_cleaned_origin.test.json\
+		${DATA_DIR}/eval_data/hh_split_llm.valid.json"
+		
+NUM_GPUS=8
+BATCH_SIZE=64
+MICRO_BATCH_SIZE=1
+LEARNING_RATE=1e-6
+GRADIENT_ACCUMULATION_STEP=$((BATCH_SIZE / NUM_GPUS / MICRO_BATCH_SIZE))
+
+torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
+    --task_type hh_split \
+    --do_train True \
+    --eval_at_start False \
+    --model_type reward \
+    --model_name_or_path <path_to_llama_7b_checkpoint_and_tokenizer> \
+    --data_type comparison_pair \
+    --train_data_path ${TRAIN_DATA_LIST} \
+    --eval_data_path ${TEST_DATA_LIST} \
+    --data_suffix rm_base \
+    --add_sep_token True \
+    --remove_unused_columns false \
+    --output_dir <path_to_save_your_rm_checkpoint> \
+    --num_train_epochs 1 \
+    --per_device_train_batch_size ${MICRO_BATCH_SIZE} \
+    --per_device_eval_batch_size ${MICRO_BATCH_SIZE} \
+    --gradient_accumulation_steps ${GRADIENT_ACCUMULATION_STEP} \
+    --evaluation_strategy steps \
+    --padding_side right \
+    --truncation_side left \
+    --pooling_type last \
+    --max_length 512 \
+    --save_strategy steps \
+    --save_total_limit 10 \
+    --learning_rate ${LEARNING_RATE} \
+    --warmup_steps 100 \
+    --logging_steps 10 \
+    --eval_steps 50 \
+    --weight_decay 0. \
+    --deepspeed configs/default_offload_opt_param.json \
+    --tf32 false --fp16 false
+```
+
+We also trained a testing RM to automatically evaluate the LLM response samples on the testing queries. To train the testing RM, simply change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the command above to learn with all the HH training comparisons.
+
 
 ## Citation
 ```
