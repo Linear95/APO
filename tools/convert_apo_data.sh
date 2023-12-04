@@ -1,5 +1,5 @@
 
-REPO_DIR="/apdcephfs/share_300000800/user/pengyucheng/exp.tencent_chat/llama/APO"
+REPO_DIR=path/to/APO/repo
 DATA_DIR="${REPO_DIR}/data/hh-split"
 
 python3 ${REPO_DIR}/tools/apo_data_converter.py \
