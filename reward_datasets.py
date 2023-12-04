@@ -33,7 +33,7 @@ class TextRewardDataset(Dataset):
 
 def reward_data_collactor(args, batch, tokenizer):
     input_ids, attention_mask = [], []
-    query_ids, text, scores = [], [], []
+    query_ids, text, scores, coeffs = [], [], [], []
     
     max_response_num = max([len(item['scores']) for item in batch])
     if args.debug_mode:
@@ -49,6 +49,11 @@ def reward_data_collactor(args, batch, tokenizer):
         input_ids.append(item['tokens']['input_ids'])
         attention_mask.append(item['tokens']['attention_mask'])
         text.append(item['text'])
+        if "type" in item and item['type'] == 'apo':
+            coeffs.append(args.apo_loss_coeff / args.apo_sample_num)
+        else:
+            coeffs.append(1.)
+        
         if "query_ids" in item:
             query_ids.append(item['query_ids'])
         
@@ -61,7 +66,8 @@ def reward_data_collactor(args, batch, tokenizer):
         "input_ids": input_ids,
         "attention_mask": attention_mask,
         "query_ids": query_ids,
-        "text": text
+        "text": text,
+        "coeffs": coeffs
     }
 
 

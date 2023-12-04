@@ -51,7 +51,7 @@ class CustomTrainingArguments(TrainingArguments):
 
     # data params
 
-    max_response_num: int = field(
+    apo_sample_num: int = field(
         default=1,
         metadata={"help": "the maximum response number of each data item"}
     )

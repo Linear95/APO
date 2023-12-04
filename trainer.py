@@ -93,8 +93,8 @@ def compute_metrics(args, prediction: EvalPrediction):
 
 
 
-def ranking_loss(logits, scores): # with shape [bs, r]
-    logits_diff = logits.unsqueeze(1) - logits.unsqueeze(2)
+def ranking_loss(logits, scores, coeffs=None): # `logits`, `scores` with shape [bs, r], `coeffs` with shape [bs]
+    logits_diff = logits.unsqueeze(1) - logits.unsqueeze(2)  # shape [bs, r, r]
 
     score_mask_larger = (scores.unsqueeze(1) > scores.unsqueeze(2)) * 1.
     score_mask_smaller = (scores.unsqueeze(1) < scores.unsqueeze(2)) * 1.
@@ -103,7 +103,10 @@ def ranking_loss(logits, scores): # with shape [bs, r]
 
     total_mask = (score_mask_larger + score_mask_smaller) * pad_mask
 
-    log_prob = torch.nn.functional.logsigmoid(logits_diff * score_mask * pad_mask)
+    log_prob = torch.nn.functional.logsigmoid(logits_diff * score_mask * pad_mask) # shape [bs, r, r]
+
+    if coeffs is not None:
+        log_prob = log_prob * coeffs.unsqueeze(-1).unsqueeze(-1)
 
     total_loss = - (log_prob * total_mask).sum()
     total_pairs = total_mask.sum()
@@ -133,15 +136,16 @@ class RewardModelTrainer(Trainer):
         scores  = torch.Tensor(inputs['scores']).float().to(device)
         input_ids = torch.Tensor(inputs['input_ids']).long().to(device)
         attention_mask = torch.Tensor(inputs['attention_mask']).float().to(device)
+        coeffs = torch.Tensor(inputs['coeffs']).float().to(device)
 
-        loss_coeff = 1.
+        # loss_coeff = 1.
         
-        if 'query_ids' in inputs:
-            query_ids = inputs['query_ids']
-            if "apo" in query_ids[0][0]:
-                loss_coeff = self.args.apo_loss_coeff
-        else:
-            query_ids = None
+        # if 'type' in inputs and :
+        #     query_ids = inputs['query_ids']
+        #     if "apo" in query_ids[0][0]:
+        #         loss_coeff = self.args.apo_loss_coeff
+        # else:
+        #     query_ids = None
 
 
         batch_size, sample_num, seq_length = input_ids.shape
@@ -160,9 +164,9 @@ class RewardModelTrainer(Trainer):
         
         batch_logits = outputs['rm_logits'].view(batch_size, sample_num) # shape [bs, r]
 
-        rm_loss = ranking_loss(batch_logits, scores)
+        rm_loss = ranking_loss(batch_logits, scores, coeffs)
                 
-        total_loss = loss_coeff * rm_loss
+        total_loss = rm_loss
 
         if self.args.debug_mode:
             print_rank_0(f">>> debug")
