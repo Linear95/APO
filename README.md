@@ -38,7 +38,7 @@ pip3 install -r requirements.txt
 
 ## Base RM Training
 
-To train the base RM for rejection sampling, use the following command:
+We build our RM on the pretrained LLaMA-7B ([`decapoda-research/llama-7b-hf`](https://huggingface.co/decapoda-research/llama-7b-hf)). To train the base RM for rejection sampling, use the following command:
 
 ```bash
 REPO_DIR=<path_to_this_repo>
@@ -58,7 +58,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --do_train True \
     --eval_at_start False \
     --model_type reward \
-    --model_name_or_path <path_to_llama_7b_checkpoint_and_tokenizer> \
+    --model_name_or_path "decapoda-research/llama-7b-hf" \
     --data_type comparison_pair \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
