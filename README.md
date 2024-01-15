@@ -124,7 +124,7 @@ GRADIENT_ACCUMULATION_STEP=$((BATCH_SIZE / NUM_GPUS / MICRO_BATCH_SIZE))
 
 
 torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
-    --task_type hh_split \
+    --task_type apo \
     --do_train True \
     --eval_at_start False \
     --model_type reward \
