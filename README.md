@@ -62,6 +62,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --data_type comparison_pair \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
+    --rm_calibration True \
     --data_suffix rm_base \
     --add_sep_token True \
     --remove_unused_columns false \
@@ -76,12 +77,10 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --pooling_type last \
     --max_length 512 \
     --save_strategy steps \
-    --save_total_limit 10 \
     --learning_rate ${LEARNING_RATE} \
     --warmup_steps 100 \
     --logging_steps 10 \
     --eval_steps 50 \
-    --weight_decay 0. \
     --deepspeed configs/default_offload_opt_param.json \
     --tf32 false --fp16 false
 ```
@@ -132,6 +131,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --data_type comparison_pair \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
+    --rm_calibration True \
     --data_suffix rm_apo_v1 \
     --add_sep_token True \
     --remove_unused_columns false \
@@ -153,7 +153,6 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --warmup_steps 100 \
     --logging_steps 10 \
     --eval_steps 50 \
-    --weight_decay 0. \
     --deepspeed configs/default_offload_opt_param.json \
     --tf32 false --fp16 false
 ```
