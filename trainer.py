@@ -7,7 +7,6 @@ import datetime
 
 import numpy as np
 import sklearn
-from sklearn.calibration import calibration_curve
 
 import torch
 import torch.distributed as dist
@@ -18,22 +17,28 @@ import transformers
 from transformers import Trainer, AutoConfig
 from transformers import EvalPrediction
 
-from utils import print_rank_0
+from utils import print_rank_0, calibration_error, numpy_sigmoid
 from utils import QUERY_PROMPT, SEP_TOKEN, STRING_SEP, INFER_TMP_FILE
 
 
 
-def rm_calibration_curve(labels, probs, masks, num_bins):
-    label_list = labels.view(-1).tolist()
-    prob_list = probs.view(-1).tolist()
-    mask_list = masks.view(-1).tolist()
+def rm_calibration_errors(args, labels, probs, masks, num_bins):
+    label_list = labels.reshape(-1).tolist()
+    prob_list = probs.reshape(-1).tolist()
+    mask_list = masks.reshape(-1).tolist()
 
     y_true, y_prob = [], []
     for label, prob, mask in zip(label_list, prob_list, mask_list):
         if mask:
             y_true.append(label)
             y_prob.append(prob)
-    return calibration_curve(np.array(y_true), np.array(y_prob), n_bins=num_bins)
+
+    if args.debug_mode:
+        print_rank_0(f">>>>> check calibration inputs mask filtered...")
+        print_rank_0(f">>>>>>>> y_true: {y_true[:10]}")
+        print_rank_0(f">>>>>>>> y_prob: {y_prob[:10]}")
+                   
+    return calibration_error(np.array(y_true), np.array(y_prob), n_bins=num_bins)
     
 
 def compute_metrics(args, prediction: EvalPrediction):
@@ -65,35 +70,37 @@ def compute_metrics(args, prediction: EvalPrediction):
     calibration_errors = {}
     if args.rm_calibration:
         for num_bins in args.calibration_bins:
-            prob_true, prob_pred = rm_calibration_curve(
+            expected_error, average_error, max_error = rm_calibration_errors(
+                args=args,                                                                            
                 labels=score_mask_larger,
-                probs=torch.sigmoid(logits_diff),
+                #probs=torch.sigmoid(logits_diff),
+                probs=numpy_sigmoid(logits_diff.numpy()),
                 masks=total_mask,
                 num_bins=num_bins
             )
-            if args.save_calibration and args.task_type == "eval":
-                time = datetime.datetime.now()
-                time_stamp = time.strftime("%d-%H:%M:%S")
-                if dist.get_rank() == 0:
-                    outputs = {"prob_true": prob_true.tolist(), "prob_pred": prob_pred.tolist()}
-                    with open(f"{args.output_dir}/calibration_result_t{args.current_eval_filename}_bin{num_bins}.json", 'w') as f:
-                        json.dump(outputs, f, ensure_ascii=False, indent=2)
+            # if args.save_calibration and args.task_type == "eval":
+            #     time = datetime.datetime.now()
+            #     time_stamp = time.strftime("%d-%H:%M:%S")
+            #     if dist.get_rank() == 0:
+            #         outputs = {"prob_true": prob_true.tolist(), "prob_pred": prob_pred.tolist()}
+            #         with open(f"{args.output_dir}/calibration_result_t{args.current_eval_filename}_bin{num_bins}.json", 'w') as f:
+            #             json.dump(outputs, f, ensure_ascii=False, indent=2)
 
-            calibration_errors[f"calibration_ACE{num_bins}"] = np.abs(prob_true - prob_pred).mean()
-            calibration_errors[f"calibration_MCE{num_bins}"] = np.abs(prob_true - prob_pred).max()
+            calibration_errors[f"calibration_ECE_bin{num_bins}"] = expected_error
+            calibration_errors[f"calibration_ACE_bin{num_bins}"] = average_error
+            calibration_errors[f"calibration_MCE_bin{num_bins}"] = max_error
 
     if args.debug_mode:
         print_rank_0(f">> check eval_prediction outputs...")
         print_rank_0(f">>> correct_compare: {correct_compare}")
         print_rank_0(f">>> total_mask: {total_mask}")
         print_rank_0(f">>> all_acc: {all_acc}")
-        print_rank_0(f">>> first_two_acc: {first_two_acc}")
+        print_rank_0(f">>> calibration error: {calibration_errors}")
 
-    return {"Preference Acc": all_acc.item(), "Avg Score": average_score, **calibration_errors} 
+    return {"Preference Acc": all_acc.item(), "Avg Score": average_score, **calibration_errors}     
 
 
-
-def ranking_loss(logits, scores, coeffs=None): # `logits`, `scores` with shape [bs, r], `coeffs` with shape [bs]
+def reward_model_loss(logits, scores, coeffs=None, loss_type="ranking"): # `logits`, `scores` with shape [bs, r], `coeffs` with shape [bs]
     logits_diff = logits.unsqueeze(1) - logits.unsqueeze(2)  # shape [bs, r, r]
 
     score_mask_larger = (scores.unsqueeze(1) > scores.unsqueeze(2)) * 1.
@@ -103,8 +110,11 @@ def ranking_loss(logits, scores, coeffs=None): # `logits`, `scores` with shape [
 
     total_mask = (score_mask_larger + score_mask_smaller) * pad_mask
 
-    log_prob = torch.nn.functional.logsigmoid(logits_diff * score_mask * pad_mask) # shape [bs, r, r]
-
+    if loss_type == "diff":
+        log_prob = logits_diff * score_mask * pad_mask # shape [bs, r, r]
+    else: 
+        log_prob = torch.nn.functional.logsigmoid(logits_diff * score_mask * pad_mask) # shape [bs, r, r]
+        
     if coeffs is not None:
         log_prob = log_prob * coeffs.unsqueeze(-1).unsqueeze(-1)
 
@@ -133,22 +143,13 @@ class RewardModelTrainer(Trainer):
                 
     def compute_loss(self, model, inputs, return_outputs=False):
         device = model.device
-        scores  = torch.Tensor(inputs['scores']).float().to(device)
-        input_ids = torch.Tensor(inputs['input_ids']).long().to(device)
-        attention_mask = torch.Tensor(inputs['attention_mask']).float().to(device)
-        coeffs = torch.Tensor(inputs['coeffs']).float().to(device)
+        scores  = torch.Tensor(inputs['scores']).float().to(device)    # shape [batch_size, response_num]
+        input_ids = torch.Tensor(inputs['input_ids']).long().to(device)    # shape [batch_size, response_num, seq_length]
+        attention_mask = torch.Tensor(inputs['attention_mask']).float().to(device) 
+        # coeffs = torch.Tensor(inputs['coeffs']).float().to(device)   
+        apo_data_mask = torch.Tensor(inputs['apo_data_mask']).float().to(device)    # shape [batch_size]  value 1 if apo data 
 
-        # loss_coeff = 1.
-        
-        # if 'type' in inputs and :
-        #     query_ids = inputs['query_ids']
-        #     if "apo" in query_ids[0][0]:
-        #         loss_coeff = self.args.apo_loss_coeff
-        # else:
-        #     query_ids = None
-
-
-        batch_size, sample_num, seq_length = input_ids.shape
+        batch_size, response_num, seq_length = input_ids.shape
         
         if self.args.debug_mode:
             print(f">>> input_ids shape {input_ids.shape}")
@@ -159,24 +160,19 @@ class RewardModelTrainer(Trainer):
             padding_side=self.args.padding_side,
             pooling_type=self.args.pooling_type
         )
-
-        # hidden_states = outputs['hidden_states'] # shape [bs*r, seq_length, dim]
         
-        batch_logits = outputs['rm_logits'].view(batch_size, sample_num) # shape [bs, r]
+        batch_logits = outputs['rm_logits'].view(batch_size, response_num) # shape [bs, r]
 
-        rm_loss = ranking_loss(batch_logits, scores, coeffs)
-                
-        total_loss = rm_loss
+        if self.args.task_type == "apo":
+            rm_kl_loss = reward_model_loss(batch_logits, scores, coeffs=(1. - apo_data_mask), loss_type="ranking")
+            apo_loss = reward_model_loss(batch_logits, scores, coeffs=apo_data_mask, loss_type=self.args.apo_loss_type)        
+            total_loss = self.args.rm_kl_coeff * rm_kl_loss + self.args.apo_loss_coeff / self.args.apo_sample_num * apo_loss
+        else:
+            total_loss = reward_model_loss(batch_logits, scores, coeffs=None, loss_type="ranking")
 
         if self.args.debug_mode:
             print_rank_0(f">>> debug")
-            # print_rank_0(f">>> input_ids shape {input_ids.shape}")
-            # # print_rank_0(f">>> loss {loss}, correct {correct}, total {total_pairs}, acc {accuracy}.")
-            # print_rank_0(f">>> outputs.logits {outputs.logits}")
-            #print_rank_0(
-            print_rank_0(f">>> kl_loss {kl_loss}")
-            print_rank_0(f">>> Language modeling loss {lm_loss}")
-            print_rank_0(f">>> Ranking loss {rm_loss}")
+            print_rank_0(f">>> input_ids shape {input_ids.shape}")
             print_rank_0(f">>> Batch rm logits {batch_logits}")
             print_rank_0(f">>> Query ids {query_ids}")
 
@@ -184,7 +180,7 @@ class RewardModelTrainer(Trainer):
             new_results = []
 
             for i_bs in range(batch_size):
-                for j_sample in range(sample_num):
+                for j_sample in range(response_num):
                     data_path, query_id, ans_id = query_ids[i_bs][j_sample].split(STRING_SEP)
                     new_results.append(
                         json.dumps({f"{query_id}:{ans_id}": batch_logits[i_bs][j_sample].item()}, ensure_ascii=False)

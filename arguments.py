@@ -119,13 +119,15 @@ class CustomTrainingArguments(TrainingArguments):
 
     cache_dir: Optional[str] = field(default=None)
 
-    optim: str = field(default="adamw_torch")
+    optim: str = field(default="adamw_torch", metadata={"help": "the paramter to use"})
+
+    apo_loss_type: str = field(default="ranking", metadata={"help": "use `ranking` or `diff` loss for apo"})
 
     apo_loss_coeff: float = field(default=0., metadata={"help": "the coefficient for apo loss."})
 
     lm_loss_coeff: float = field(default=0., metadata={"help": "the coefficient for language modeling loss."})
 
-    rm_kl_coeff: float = field(default=0., metadata={"help": "the coefficient for apo rm kl regularizer."})
+    rm_kl_coeff: float = field(default=1., metadata={"help": "the coefficient for apo rm kl regularizer."})
 
     contrast_loss_coeff: float = field(default=0., metadata={"help": "the coefficient for contrastive learning loss."})
 

@@ -33,7 +33,7 @@ class TextRewardDataset(Dataset):
 
 def reward_data_collactor(args, batch, tokenizer):
     input_ids, attention_mask = [], []
-    query_ids, text, scores, coeffs = [], [], [], []
+    query_ids, text, scores, apo_data_mask = [], [], [], []
     
     max_response_num = max([len(item['scores']) for item in batch])
     if args.debug_mode:
@@ -49,10 +49,13 @@ def reward_data_collactor(args, batch, tokenizer):
         input_ids.append(item['tokens']['input_ids'])
         attention_mask.append(item['tokens']['attention_mask'])
         text.append(item['text'])
-        if "type" in item and item['type'] == 'apo':
-            coeffs.append(args.apo_loss_coeff / args.apo_sample_num)
+
+        if item.get("type", "hh") == 'apo':
+            apo_data_mask.append(1)
+            # coeffs.append(args.apo_loss_coeff / args.apo_sample_num)
         else:
-            coeffs.append(1.)
+            apo_data_mask.append(0)
+            # coeffs.append(args.rm_kl_coeff)
         
         if "query_ids" in item:
             query_ids.append(item['query_ids'])
@@ -67,7 +70,8 @@ def reward_data_collactor(args, batch, tokenizer):
         "attention_mask": attention_mask,
         "query_ids": query_ids,
         "text": text,
-        "coeffs": coeffs
+        "apo_data_mask": apo_data_mask
+        # "coeffs": coeffs
     }
 
 
@@ -178,7 +182,7 @@ def load_rejection_samples(data_path):
                 outputs.append({
                     "text": [ query + SEP_TOKEN + item[key]],
                     "query_ids": [ data_path + STRING_SEP + query_id + STRING_SEP + key],
-                    "score": [-1]
+                    "scores": [-1]
                 })
     print(f">>> totally get {len(outputs)} rejection samples.")
     print(outputs[0])
@@ -186,7 +190,7 @@ def load_rejection_samples(data_path):
 
 
 def load_text_score_dataset(args, data_path):
-    print_rank_0("loading text-score dataset from: \n   {}".format(data_path))
+    print_rank_0("loading text-scores dataset from: \n   {}".format(data_path))
 
     if args.data_type == "reject_sample":
         data_list = load_rejection_samples(data_path)
@@ -194,6 +198,8 @@ def load_text_score_dataset(args, data_path):
         data_list = read_json_or_jsonl_data(data_path)
         for item in data_list:
             item['query_ids'] = [os.path.split(data_path)[1]] * len(item['text'])
+
+    
             
     print_rank_0("finished loading with {} data.".format(len(data_list)))
     return data_list
