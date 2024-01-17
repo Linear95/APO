@@ -15,7 +15,7 @@ We let the reward model (RM) and LLM agent play a min-max game, through which bo
 Currently, the repo contains:
 - [Split Helpful\&Harmless](data/hh-split) (HH) dataset
 - [GPT-4 responses](data/hh-split/rm_data/hh_split_rm.golden.json) as golden annotation on HH-RM training set
-- The base, testing, and APO RM training pipelines
+- The base RM, testing RM, and APO RM training pipelines
 
 We are continuously updating this repo for the reproduction of APO experiments.
 
