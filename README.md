@@ -91,7 +91,7 @@ We also trained a testing RM to evaluate the LLM response samples on the testing
 
 ## APO RM Training
 
-To train the APO RM, first merge LLM samples and golden annotations into APO comparision pairs:
+To train the APO RM, first merge LLM samples and golden annotations into APO comparison pairs:
 ```
 REPO_DIR=<path_to_this_repo>
 DATA_DIR="${REPO_DIR}/data/hh-split"
@@ -103,7 +103,7 @@ python3 ${REPO_DIR}/tools/apo_data_converter.py \
 	--apo_data_name "rm_apo_data_v0"
 ```
 
-Then use the following command to conduct APO finetuning for Base RM:
+Then use the following command to conduct APO RM finetuning:
 ```
 REPO_DIR=<path_to_this_repo>
 DATA_DIR=${REPO_DIR}/data/hh-split
