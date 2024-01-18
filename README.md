@@ -117,7 +117,7 @@ TEST_DATA_LIST="${DATA_DIR}/eval_data/hh_cleaned_origin.test.json \
 NUM_GPUS=8
 BATCH_SIZE=64
 MICRO_BATCH_SIZE=1
-LEARNING_RATE=1e-7
+LEARNING_RATE=1e-6
 APO_COEFF=0.1
 GRADIENT_ACCUMULATION_STEP=$((BATCH_SIZE / NUM_GPUS / MICRO_BATCH_SIZE))
 
@@ -127,7 +127,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --do_train True \
     --eval_at_start False \
     --model_type reward \
-    --model_name_or_path <path_to_RM_Base_checkpoint> \
+    --model_name_or_path "decapoda-research/llama-7b-hf" \
     --data_type comparison_pair \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
