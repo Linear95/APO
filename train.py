@@ -15,7 +15,7 @@ from transformers import Trainer, AutoConfig
 from transformers import EvalPrediction
 
 
-from model import LlamaRewardModel, BertRewardModel
+from model import LlamaRewardModel
 
 from reward_datasets import TextRewardDataset, reward_data_collactor
 from reward_datasets import load_text_score_dataset

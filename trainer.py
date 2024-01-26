@@ -173,10 +173,10 @@ class RewardModelTrainer(Trainer):
         if self.args.debug_mode:
             print_rank_0(f">>> debug")
             print_rank_0(f">>> input_ids shape {input_ids.shape}")
-            print_rank_0(f">>> Batch rm logits {batch_logits}")
-            print_rank_0(f">>> Query ids {query_ids}")
+            print_rank_0(f">>> Batch rm logits {batch_logits}")            
 
         if self.args.task_type == "inference":
+            query_ids = inputs['query_ids']
             new_results = []
 
             for i_bs in range(batch_size):

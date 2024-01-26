@@ -173,14 +173,18 @@ def load_rejection_samples(data_path):
     outputs = []
     for item in data_list:
         # print_rank_0(item)
-        query = item['instruction']
+        if 'query' in item:
+            query = str(item['query'])
+        else:
+            query = str(item['instruction'])
+            
         query_id = str(item['query_id'])
         
         for key in item:
             #if "hh_best" in key or "gpt4" in key:
-            if "ans_" in key or "gpt4" in key:
+            if "sample_" in key or "gpt4" in key or 'ans_' in key:
                 outputs.append({
-                    "text": [ query + SEP_TOKEN + item[key]],
+                    "text": [ query + SEP_TOKEN + str(item[key])],
                     "query_ids": [ data_path + STRING_SEP + query_id + STRING_SEP + key],
                     "scores": [-1]
                 })

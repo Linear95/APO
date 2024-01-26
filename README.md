@@ -15,7 +15,7 @@ We let the reward model (RM) and LLM agent play a min-max game, through which bo
 Currently, the repo contains:
 - [Split Helpful\&Harmless](data/hh-split) (HH) dataset
 - [GPT-4 responses](data/hh-split/rm_data/hh_split_rm.golden.json) as golden annotation on HH-RM training set
-- The base RM, testing RM, and APO RM training pipelines
+- The base RM, testing RM, and APO RM training \& scoring pipelines
 
 We are continuously updating this repo for the reproduction of APO experiments.
 
@@ -35,8 +35,9 @@ We use `Python3.8` with the dependencies listed in `requirements.txt`. To build 
 ```
 pip3 install -r requirements.txt
 ```
+## RM Training
 
-## Base RM Training
+### Base RM Training
 
 We build our RM on the pretrained LLaMA-7B ([`decapoda-research/llama-7b-hf`](https://huggingface.co/decapoda-research/llama-7b-hf)). To train the base RM for rejection sampling, use the following command:
 
@@ -59,7 +60,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --eval_at_start False \
     --model_type reward \
     --model_name_or_path "decapoda-research/llama-7b-hf" \
-    --data_type comparison_pair \
+    --data_type "comparison_pair" \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
     --rm_calibration True \
@@ -87,9 +88,14 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
 
 We also trained a testing RM to evaluate the LLM response samples on the testing queries automatically. To train the testing RM, change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the above command to learn with all the HH training comparisons.
 
+The RM training data files (values in `TRAIN_DATA_LIST`) are lists of dictionaries, where each disctionary is an RM training item (`--data_type="comparison_pair"`) including the following keys:
+- `text`: a list of query-response text, splited by a special token `<sep>`.
+- `scores`: a list of float numbers, representing the preference scores of the corresponding query-response text.
+- `query_id`: a unique ID to the RM training item.
 
 
-## APO RM Training
+
+### APO RM Training
 
 To train the APO RM, first merge LLM samples and golden annotations into APO comparison pairs:
 ```
@@ -128,7 +134,7 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --eval_at_start False \
     --model_type reward \
     --model_name_or_path "decapoda-research/llama-7b-hf" \
-    --data_type comparison_pair \
+    --data_type "comparison_pair" \
     --train_data_path ${TRAIN_DATA_LIST} \
     --eval_data_path ${TEST_DATA_LIST} \
     --rm_calibration True \
@@ -156,6 +162,58 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --deepspeed configs/default_offload_opt_param.json \
     --tf32 false --fp16 false
 ```
+## RM Scoring
+
+After finishing the RM training, we can use the following command to scoring new LLM samples:
+```bash
+REPO_DIR=<path_to_this_repo>
+DATA_DIR=${REPO_DIR}/data/hh-split/llm_data
+DATA_PATH="${DATA_DIR}/hh_split_llm_alpaca_v0.sample.json"
+
+MODEL_PATH=<path_to_your_RM_checkpoint>
+MODEL_NAME="base_rm" # or "apo_rm"
+
+NUM_GPUS=8
+MICRO_BATCH_SIZE=16
+
+torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
+    --task_type inference \
+    --do_train False \
+    --eval_at_start True \
+    --model_type reward \
+    --model_name_or_path ${MODEL_PATH} \
+    --data_type "reject_sample" \
+    --eval_data_path ${DATA_PATH} \
+    --rm_calibration False \
+    --data_suffix ${MODEL_NAME} \
+    --add_sep_token True \
+    --remove_unused_columns false \
+    --output_dir <path_to_save_your_inference_results> \
+    --per_device_eval_batch_size ${MICRO_BATCH_SIZE} \
+    --evaluation_strategy steps \
+    --padding_side right \
+    --truncation_side left \
+    --pooling_type last \
+    --max_length 512 \
+    --deepspeed configs/default_offload_opt_param.json \
+    --tf32 false --fp16 false
+
+
+# rejection sampling
+SCORE_PATH=${DATA_PATH}_pred_${MODEL_NAME}_results.json
+OUTPUT_FILE_NAME=${DATA_PATH}_rjs_${MODEL_NAME}.json
+
+python3 ${REPO_DIR}/tools/rejection_sampling.py \
+	--data_path ${DATA_DIR} \
+	--score_path ${SCORE_PATH} \
+	--output_dir ${DATA_DIR} \
+	--rm_scorer  ${MODEL_NAME} \
+	--output_file_name ${OUTPUT_FILE_NAME}
+
+# remove tmp inference files
+rm ${DATA_DIR}/*rank*.jsonl
+```
+After inference process, we obtain a RM scoring file `${DATA_PATH}_rjs_${MODEL_NAME}.json`. Then we can update the Alpaca model with the training pipeline [here](https://github.com/tatsu-lab/stanford_alpaca).
 
 
 ## Citation
