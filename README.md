@@ -13,8 +13,8 @@ We let the reward model (RM) and LLM agent play a min-max game, through which bo
 </p>
 
 Currently, the repo contains:
-- [Split Helpful\&Harmless](data/hh-split) (HH) dataset
-- [GPT-4 responses](data/hh-split/rm_data/hh_split_rm.golden.json) as golden annotation on HH-RM training set
+- [Split Helpful\&Harmless](https://drive.google.com/drive/folders/1v0xNMMOfL9lfFLzTGCerZCPNPJrR9ZLX?usp=sharing) (HH) dataset
+- [GPT-4 responses](https://drive.google.com/file/d/1hDo6Sk8QX1c3kP_qJUgZ4J16kHAi0hEq/view?usp=sharing) as golden annotation on HH-RM training set
 - The base RM, testing RM, and APO RM training \& scoring pipelines
 
 We are continuously updating this repo for the reproduction of APO experiments.
@@ -25,9 +25,9 @@ To separately update RM and LLM, we split the cleaned [Helpful\&Harmless](https:
 
 | Data Type| HH-RM Train Set | HH-LLM Train Set| HH Test Set|
 | --------:| :----------|:-------| :--------|
-| Preference Pairs | [RM training set](data/hh-split/rm_data/hh_split_rm.train.json) | [RM validation set](data/hh-split/eval_data/hh_split_llm.valid.json) | [RM testing set](data/hh-split/eval_data/hh_cleaned_origin.test.json)|
-| Golden Answers | [APO positive responses](data/hh-split/rm_data/hh_split_rm.golden.json) | - | -|
-|User Queries | [APO negative responses](data/hh-split/rm_data/hh_split_rm_alpaca_v0.sample.json) (Alpaca samples)| [LLM (Alpaca) rejection samples](data/hh-split/llm_data/hh_split_llm_alpaca_v0.sample.json)| [LLM testing Queries](data/hh-split/eval_data/hh_cleaned_origin.test.json)|
+| Preference Pairs | [RM training set](https://drive.google.com/file/d/12DefElb3DazIPeaIEwd0B_9La84Slc7f/view?usp=sharing) | [RM validation set](https://drive.google.com/file/d/1ZqTuupFxrK2m3_E6ezMRcdT_4k6zX-IW/view?usp=sharing) | [RM testing set](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=sharing)|
+| Golden Answers | [APO positive responses](https://drive.google.com/file/d/1hDo6Sk8QX1c3kP_qJUgZ4J16kHAi0hEq/view?usp=sharing) | - | -|
+|User Queries | [APO negative responses](https://drive.google.com/file/d/1_wiKVKob6QVOHja4C_N-y5LlvHZE9ZiZ/view?usp=sharing) (Alpaca samples)| [LLM (Alpaca) rejection samples](https://drive.google.com/file/d/1ZpAXK0F-YC919_vP7gnyGpo8ezQGIv5O/view?usp=sharing)| [LLM testing Queries](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=drive_link)|
 
 
 ## Environment
@@ -86,10 +86,10 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --tf32 false --fp16 false
 ```
 
-We also trained a testing RM to evaluate the LLM response samples on the testing queries automatically. To train the testing RM, change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the above command to learn with all the HH training comparisons.
+We also trained a testing RM to automatically evaluate the LLM response quality on the testing queries. To train the testing RM, change `TRAIN_DATA_LIST=${DATA_DIR}/hh_cleaned_origin.train.json` in the above command to learn with all the HH training comparisons.
 
-The RM training data files (values in `TRAIN_DATA_LIST`) are lists of dictionaries, where each disctionary is an RM training item (`--data_type="comparison_pair"`) including the following keys:
-- `text`: a list of query-response text, splited by a special token `<sep>`.
+The RM training data files (values in `TRAIN_DATA_LIST`) are lists of dictionaries, where each dictionary is an RM training item (`--data_type="comparison_pair"`) including the following keys:
+- `text`: a list of query-response text, split by a special token `<sep>`.
 - `scores`: a list of float numbers, representing the preference scores of the corresponding query-response text.
 - `query_id`: a unique ID to the RM training item.
 
