@@ -1,6 +1,6 @@
 # APO Training & Evaluating Data
 
-we have move the data to [Google Drive](https://drive.google.com/drive/folders/1v0xNMMOfL9lfFLzTGCerZCPNPJrR9ZLX) due to the github LFS storage limitation.
+we have move the data to [Google Drive](https://drive.google.com/drive/folders/1v0xNMMOfL9lfFLzTGCerZCPNPJrR9ZLX) due to the GitHub LFS storage limitation.
 
 The data separation can be found below:
 
