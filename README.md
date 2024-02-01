@@ -22,6 +22,10 @@ We are continuously updating this repo for the reproduction of APO experiments.
 ## Data \& Annotation
 
 To separately update RM and LLM, we split the cleaned [Helpful\&Harmless](https://github.com/Linear95/DSP/tree/main/data) (HH) dataset into an RM training set and a LLM training set.
+On both HH-RM and HH-LLM training sets, we inference four LLM responses for each query as [`alpaca_rm_samples`](https://drive.google.com/file/d/1_wiKVKob6QVOHja4C_N-y5LlvHZE9ZiZ/view?usp=sharing) and [`alpaca_llm_samples`](https://drive.google.com/file/d/1ZpAXK0F-YC919_vP7gnyGpo8ezQGIv5O/view?usp=sharing). `alpaca_rm_samples` is combined with the golden responses on the HH-RM set as APO RM training pairs. `alpaca_llm_samples` is further scored by RMs and used for LLM alignment. To obtain LLM responses by yourself, run
+```bash
+bash tools/llm_response_gen.sh
+```
 
 | Data Type| HH-RM Train Set | HH-LLM Train Set| HH Test Set|
 | --------:| :----------|:-------| :--------|
@@ -80,8 +84,6 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --save_strategy steps \
     --learning_rate ${LEARNING_RATE} \
     --warmup_steps 100 \
-    --logging_steps 10 \
-    --eval_steps 50 \
     --deepspeed configs/default_offload_opt_param.json \
     --tf32 false --fp16 false
 ```
@@ -157,8 +159,6 @@ torchrun --nproc_per_node=${NUM_GPUS} --master_port=6000 ${REPO_DIR}/train.py \
     --save_total_limit 10 \
     --learning_rate ${LEARNING_RATE} \
     --warmup_steps 100 \
-    --logging_steps 10 \
-    --eval_steps 50 \
     --deepspeed configs/default_offload_opt_param.json \
     --tf32 false --fp16 false
 ```

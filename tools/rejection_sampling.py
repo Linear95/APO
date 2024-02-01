@@ -6,33 +6,18 @@ import glob
 from copy import deepcopy
 from pprint import pprint
 
-pattern = r"I can't assist with that.{0,5}$"
-
 def get_best_key(item, item_scores, filter_pattern=False):
     max_score = -100000000.
     result = None
-    # print(item)
-    # print(item_scores)
-    # print("----------------------------------------------------------")
     for key, value in item_scores.items():
-        # print('debug1')
-        # print(key, value)
         if len(item_scores) > 1 and key == "hh_best":
             continue
         if value > max_score:
-            # print('debug')
-            # print(key, value)
             if item[key].strip() == "":
-            #if False:
-                #print(item)
                 continue
-            # elif re.search(pattern, item[key]) and filter_pattern:
-            #     continue
             else:
                 result = deepcopy(key)
                 max_score = value
-    # print(key)
-    # print(max_score)
     return result
 
 def get_scores_from_list(score_list):
@@ -78,8 +63,6 @@ def rejection_sample(data_path, score_path=None, rm_scorer=None):
 
     if score_path is not None:
         with open(score_path, 'r') as f:
-            # lines = f.readlines()
-            # scores_list = [json.loads(l.strip()) for l in lines]
             score_list = json.load(f)
         data_scores = get_scores_from_list(score_list)
     elif rm_scorer is not None:
@@ -106,8 +89,6 @@ def rejection_sample(data_path, score_path=None, rm_scorer=None):
         item['scores'] = item_scores
 
         if best_res_key == "hh_best":
-            # print("--------------------------------------------------------------------")
-            # pprint(item)
             hh_best_counter += 1
         outputs.append(deepcopy(item))
     print(f"get {hh_best_counter} data with hh_best selected")
