@@ -16,17 +16,24 @@ Currently, the repo contains:
 - [Split Helpful\&Harmless](https://drive.google.com/drive/folders/1v0xNMMOfL9lfFLzTGCerZCPNPJrR9ZLX?usp=sharing) (HH) dataset
 - [GPT-4 responses](https://drive.google.com/file/d/1hDo6Sk8QX1c3kP_qJUgZ4J16kHAi0hEq/view?usp=sharing) as golden annotation on HH-RM training set
 - The base RM, testing RM, and APO RM training \& scoring pipelines
+- The LLM response generation [pipeline](https://github.com/Linear95/APO/blob/main/tools/llm_response_gen.sh)
 
 We are continuously updating this repo for the reproduction of APO experiments.
+
+## Environment
+We use `Python3.8` with the dependencies listed in `requirements.txt`. To build the appropriate environment, use the following command:
+```
+pip3 install -r requirements.txt
+```
 
 ## Data \& Annotation
 
 To separately update RM and LLM, we split the cleaned [Helpful\&Harmless](https://github.com/Linear95/DSP/tree/main/data) (HH) dataset into an RM training set and a LLM training set.
 | Data Type| HH-RM Train Set | HH-LLM Train Set| HH Test Set|
 | --------:| :----------|:-------| :--------|
-| Preference Pairs | [RM training set](https://drive.google.com/file/d/12DefElb3DazIPeaIEwd0B_9La84Slc7f/view?usp=sharing) | [RM validation set](https://drive.google.com/file/d/1ZqTuupFxrK2m3_E6ezMRcdT_4k6zX-IW/view?usp=sharing) | [RM testing set](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=sharing)|
+| Preference Pairs | [RM training set](https://drive.google.com/file/d/12DefElb3DazIPeaIEwd0B_9La84Slc7f/view?usp=sharing) | [RM validation set](https://drive.google.com/file/d/1ZqTuupFxrK2m3_E6ezMRcdT_4k6zX-IW/view?usp=sharing) (sampled 10K pairs) | [RM testing set](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=sharing)|
 | Golden Answers | [APO positive responses](https://drive.google.com/file/d/1hDo6Sk8QX1c3kP_qJUgZ4J16kHAi0hEq/view?usp=sharing) | - | -|
-| LLM Samples | [APO negative responses](https://drive.google.com/file/d/1_wiKVKob6QVOHja4C_N-y5LlvHZE9ZiZ/view?usp=sharing) (Alpaca samples)| [LLM (Alpaca) rejection samples](https://drive.google.com/file/d/1ZpAXK0F-YC919_vP7gnyGpo8ezQGIv5O/view?usp=sharing)| [LLM testing Queries](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=drive_link)|
+| LLM Samples | APO negative responses ([`alpaca_rm_samples`](https://drive.google.com/file/d/1_wiKVKob6QVOHja4C_N-y5LlvHZE9ZiZ/view?usp=sharing)) | LLM alignment samples ([alpaca_llm_samples](https://drive.google.com/file/d/1ZpAXK0F-YC919_vP7gnyGpo8ezQGIv5O/view?usp=sharing))| [LLM testing Queries](https://drive.google.com/file/d/1ite1KXZlGs1ojCVB20rLHlj7_3KlOULY/view?usp=drive_link)|
 
 
 On both HH-RM and HH-LLM training sets, we infer four LLM responses for each query as [`alpaca_rm_samples`](https://drive.google.com/file/d/1_wiKVKob6QVOHja4C_N-y5LlvHZE9ZiZ/view?usp=sharing) and [`alpaca_llm_samples`](https://drive.google.com/file/d/1ZpAXK0F-YC919_vP7gnyGpo8ezQGIv5O/view?usp=sharing). `alpaca_rm_samples` is combined with the golden responses on the HH-RM set as APO RM training pairs. `alpaca_llm_samples` is further scored by RMs and used for LLM alignment. To obtain LLM responses by yourself, run the command:
@@ -35,11 +42,7 @@ bash tools/llm_response_gen.sh
 ```
 
 
-## Environment
-We use `Python3.8` with the dependencies listed in `requirements.txt`. To build the appropriate environment, use the following command:
-```
-pip3 install -r requirements.txt
-```
+
 ## RM Training
 
 ### Base RM Training
