@@ -38,6 +38,12 @@ class CustomTrainingArguments(TrainingArguments):
         metadata={"help": "the base model type for reward model, selected from [llama, bert]."}
     )
 
+    model_prefix: str = field(
+        default="llama",
+        metadata={"help": "the base model type for reward model, selected from [llama, bert]."}
+    )
+
+
     pooling_type: str = field(
         default="average",
         metadata={"help": "the pooling method for reward model, selected from [average, max, last]."}
@@ -158,6 +164,11 @@ class CustomTrainingArguments(TrainingArguments):
         default=None, 
         metadata={"help":  "either training checkpoint or final adapter"}
     )
+    # generation parameters:
+    max_new_tokens: int = field(
+        default=256,
+        metadata={"help": "the max sentence sequence length."}
+    )   
 
     # evaluation parameters:
     rm_calibration: bool = field(

@@ -6,8 +6,9 @@ import argparse
 from pprint import pprint
 from tqdm import tqdm
 
-def preprocess_response(response):
+def preprocess_response(response):    
     while "\nHuman:" in response:
+        # remove the additional generation of LLM after the current turn responses.
         response = response.split("\nHuman:")[0]
 
     return response

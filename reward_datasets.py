@@ -101,6 +101,10 @@ def reward_tokenize(sentences, tokenizer, padding="longest", add_sep_token=False
                     [tokenizer.bos_token_id] + tokenizer.encode(sent, add_special_tokens=False) + [tokenizer.eos_token_id]
                 )
             
+    return batch_padding(input_ids, tokenizer, padding=padding)
+
+
+def batch_padding(input_ids, tokenizer, padding='longest'):
     if padding == 'longest':
         max_input_length = max([len(inp_ids) for inp_ids in input_ids])
         max_length = min(tokenizer.model_max_length, max_input_length)
