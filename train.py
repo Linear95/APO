@@ -120,12 +120,10 @@ def train():
                 eval_result = trainer.evaluate(eval_dataset=eval_dataset, metric_key_prefix="eval_"+eval_set_name)
                 print_rank_0(eval_result)
 
-
-        with torch.autocast("cuda"): 
-            if args.resume_from_checkpoint:
-                train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
-            else:
-                train_result = trainer.train()
+        if args.resume_from_checkpoint:
+            train_result = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+        else:
+            train_result = trainer.train()
 
         metrics = train_result.metrics
         trainer.log_metrics("train", metrics)
