@@ -4,21 +4,21 @@
 [![Data License](https://img.shields.io/badge/Data%20License-CC%20By%20NC%204.0-red.svg)](https://github.com/Linear95/APO/blob/main/DATA_LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
 
-This repo contains the implementation of [Adversarial Preference Optimization](https://arxiv.org/abs/2311.08045) (APO). 
+This repo contains the implementation of the ACL 2024 paper:
+- [Adversarial Preference Optimization: Enhancing Your Alignment via RM-LLM Game](https://arxiv.org/abs/2311.08045). 
 
-We let the reward model (RM) and LLM agent play a min-max game, through which both models can be further enhanced without additional preference annotation.
+In Adversarial Preference Optimization (APO), we let the reward model (RM) and LLM agent play a min-max game, through which both models can be further enhanced without additional preference annotation.
 
 <p align="center">
-  <img src="figures/apo_framework_shot.png" height="75%" width="75%">
+  <img src="figures/apo_framework_v.png" height="75%" width="75%">
 </p>
 
-Currently, the repo contains:
+For an overview, the repo contains:
 - [Split Helpful\&Harmless](https://drive.google.com/drive/folders/1v0xNMMOfL9lfFLzTGCerZCPNPJrR9ZLX?usp=sharing) (HH) dataset
 - [GPT-4 responses](https://drive.google.com/file/d/1hDo6Sk8QX1c3kP_qJUgZ4J16kHAi0hEq/view?usp=sharing) as golden annotation on HH-RM training set
 - The base RM, testing RM, and APO RM training \& scoring pipelines
 - The LLM response generation [pipeline](https://github.com/Linear95/APO/blob/main/tools/llm_response_gen.sh)
 
-We are continuously updating this repo for the reproduction of APO experiments.
 
 ## Environment
 We use `Python3.8` with the dependencies listed in `requirements.txt`. To build the appropriate environment, use the following command:
@@ -222,10 +222,10 @@ After inference process, we obtain a RM scoring file `${DATA_PATH}_rjs_${MODEL_N
 
 ## Citation
 ```
-@article{cheng2023adversarial,
-  title={Adversarial Preference Optimization},
-  author={Cheng, Pengyu and Yang, Yifan and Li, Jian and Dai, Yong and Du, Nan},
-  journal={arXiv preprint arXiv:2311.08045},
-  year={2023}
+@inproceedings{cheng2024adversarial,
+  title={Adversarial Preference Optimization: Enhancing Your Alignment via RM-LLM Game},
+  author={Cheng, Pengyu and Yang, Yifan and Li, Jian and Dai, Yong and Hu, Tianhao and Cao, Peixin and Du, Nan and Li, Xiaolong},
+  booktitle={Findings of the Association for Computational Linguistics},
+  year={2024}
 }
 ```
