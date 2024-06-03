@@ -10,7 +10,7 @@ This repo contains the implementation of the ACL 2024 paper:
 In Adversarial Preference Optimization (APO), we let the reward model (RM) and LLM agent play a min-max game, through which both models can be further enhanced without additional preference annotation.
 
 <p align="center">
-  <img src="figures/apo_framework_v.png" height="75%" width="75%">
+  <img src="figures/apo_framework_v.png" height="60%" width="60%">
 </p>
 
 For an overview, the repo contains:
